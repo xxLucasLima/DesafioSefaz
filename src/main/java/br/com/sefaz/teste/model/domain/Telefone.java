@@ -1,14 +1,13 @@
 package br.com.sefaz.teste.model.domain;
 
-import javax.validation.constraints.NotNull;
-
 public class Telefone {
 
     public int Id;
+    private String IdString;
     public int UsuarioId;
     public int Ddd;
     public String Numero;
-    public String Tipo;
+    public char Tipo;
 
     public int getId() {
         return Id;
@@ -26,7 +25,6 @@ public class Telefone {
         UsuarioId = usuarioId;
     }
 
-    @NotNull
     public int getDdd() {
         return Ddd;
     }
@@ -35,7 +33,6 @@ public class Telefone {
         Ddd = ddd;
     }
 
-    @NotNull
     public String getNumero() {
         return Numero;
     }
@@ -44,13 +41,20 @@ public class Telefone {
         Numero = numero;
     }
 
-    @NotNull
-    public String getTipo() {
+    public char getTipo() {
         return Tipo;
     }
 
-    public void setTipo(String tipo) {
+    public void setTipo(char tipo) {
         Tipo = tipo;
+    }
+
+    public String getIdString() {
+        return IdString;
+    }
+
+    public void setIdString(String IdString) {
+        this.IdString = IdString;
     }
 
 }

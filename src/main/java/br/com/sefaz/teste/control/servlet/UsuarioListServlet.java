@@ -1,11 +1,9 @@
 package br.com.sefaz.teste.control.servlet;
 
 import br.com.sefaz.teste.model.dao.*;
-import br.com.sefaz.teste.model.domain.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;

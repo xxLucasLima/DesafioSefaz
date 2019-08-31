@@ -14,7 +14,7 @@
         <div id="form-group">
             <form action="index.jsp" method="post">
                 <h2 >Login</h2>
-                <input type="text" name="email" placeholder="Login" class="form-control"></input>
+                <input type="text" name="login" placeholder="Login" class="form-control"></input>
                 <input type="password" name="senha" placeholder="Senha" class="form-control"><hr>
                 <button type="submit" name="bOK" class="btn btn-primary form-control">Enviar</button>
         </div>

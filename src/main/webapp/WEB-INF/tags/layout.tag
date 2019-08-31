@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <title>Insert title here</title>
         <link href="../../css/layout.css" rel="stylesheet" type="text/css"/>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -30,16 +30,21 @@
 
 
 <style>
-    .form-create, .table-usuarios{
-        padding-left: 250px;
-        padding-right : 250px;
+    .form-create{
+        padding-left: 230px;
+        padding-right : 230px;
         width: 100%;
         height: 100%;
         text-align: center;
     }
     .table-usuarios{
-        padding-left:350px;
-        padding-right : 350px;
+        padding-left:300px;
+        padding-right : 300px;
         text-align: center;
+        width: 100%;
+        height: 100%;
+    }
+    h2, h4{
+        text-align: left;
     }
 </style>

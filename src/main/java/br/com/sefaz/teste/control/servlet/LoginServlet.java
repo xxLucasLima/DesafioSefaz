@@ -6,7 +6,6 @@ import br.com.sefaz.teste.util.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -24,7 +23,7 @@ public class LoginServlet extends HttpServlet {
 
         try {
             if (request.getParameter("bOK") != null) {
-                String login = request.getParameter("email");
+                String login = request.getParameter("login");
                 String senha = request.getParameter("senha");
                 if (login == null || login.isEmpty()) {
                     erros.add("Login não informado!");
@@ -34,7 +33,7 @@ public class LoginServlet extends HttpServlet {
                 }
                 if (!erros.isExisteErros()) {
                     Usuario user = new Usuario();
-                    user.setEmail(login);
+                    user.setLogin(login);
                     user.setSenha(senha);
                     boolean isUser = userDAO.VerifyEmailAndPassword(user);
                     if (isUser) {

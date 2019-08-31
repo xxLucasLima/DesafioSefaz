@@ -1,19 +1,17 @@
 package br.com.sefaz.teste.model.domain;
 
-import javax.validation.constraints.*;
-import sun.security.util.Length;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Usuario {
 
     public int Id;
     public String Nome;
     public String Email;
+    public String Login;
     public String Senha;
-    public Telefone Telefone;
+    public ArrayList<Telefone> Telefones;
 
-//	public Usuario(Telefone telefone) {
-//		this.telefone = telefone;
-//	}
     public int getId() {
         return Id;
     }
@@ -22,15 +20,6 @@ public class Usuario {
         Id = id;
     }
 
-    public Telefone getTelefone() {
-        return Telefone;
-    }
-
-    public void setTelefone(Telefone telefone) {
-        this.Telefone = telefone;
-    }
-
-    @NotNull
     public String getSenha() {
         return Senha;
     }
@@ -39,7 +28,6 @@ public class Usuario {
         Senha = senha;
     }
 
-    @NotNull
     public String getNome() {
         return Nome;
     }
@@ -48,12 +36,23 @@ public class Usuario {
         Nome = nome;
     }
 
-    @NotNull
     public String getEmail() {
         return Email;
     }
 
     public void setEmail(String email) {
         Email = email;
+    }    
+    
+    public String getLogin() {
+        return Login;
+    }
+
+    public void setLogin(String login) {
+        Login = login;
+    }    
+    
+    public ArrayList<Telefone> getTelefones() {
+        return Telefones;
     }
 }

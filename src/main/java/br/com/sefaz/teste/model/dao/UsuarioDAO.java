@@ -14,39 +14,47 @@ public class UsuarioDAO {
 
     public boolean CreateUsuario(Usuario usuario) throws SQLException, ClassNotFoundException {
         int result = 0;
+        int usuarioid = 0;
         Connection connection = JDBCFactory.getConnection();
+        try {
+            connection.setAutoCommit(false);
+            usuarioStatement = connection.prepareStatement("INSERT INTO Public.USUARIO ( NOME, EMAIL, LOGIN, SENHA) VALUES (?,?,?,?);", usuarioStatement.RETURN_GENERATED_KEYS);
+            usuarioStatement.setString(1, usuario.getNome());
+            usuarioStatement.setString(2, usuario.getEmail());
+            usuarioStatement.setString(3, usuario.getLogin());
+            usuarioStatement.setString(4, usuario.getSenha());
 
-        connection.setAutoCommit(false);
-        usuarioStatement = connection.prepareStatement("INSERT INTO Public.USUARIO ( NOME, EMAIL, SENHA) VALUES (?,?,?);", usuarioStatement.RETURN_GENERATED_KEYS);
-        usuarioStatement.setString(1, usuario.getNome());
-        usuarioStatement.setString(2, usuario.getEmail());
-        usuarioStatement.setString(3, usuario.getSenha());
-        result = usuarioStatement.executeUpdate();
+            result = usuarioStatement.executeUpdate();
 
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao criar usuário.");
-        }
-
-        telefoneStatement = connection.prepareStatement("INSERT INTO Public.TELEFONE ( DDD, NUMERO, TIPO, USUARIOID) VALUES (?,?,?,?);");
-        telefoneStatement.setInt(1, usuario.getTelefone().getDdd());
-        telefoneStatement.setString(2, usuario.getTelefone().getNumero());
-        telefoneStatement.setString(3, usuario.getTelefone().getTipo());
-        try (ResultSet generatedKeys = usuarioStatement.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                telefoneStatement.setInt(4, generatedKeys.getInt(1));
-            } else {
-                throw new SQLException("Falha na criação do usuário. Não foi gerado ID");
+            try (ResultSet generatedKeys = usuarioStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    usuarioid = generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Falha na criação do usuário. Não foi gerado ID");
+                }
             }
-        }
 
-        result = telefoneStatement.executeUpdate();
+            if (result == 0) {
+                throw new SQLException("Houve um erro ao criar usuário.");
+            }
+            for (Telefone telefone : usuario.getTelefones()) {
+                telefoneStatement = connection.prepareStatement("INSERT INTO Public.TELEFONE ( DDD, NUMERO, TIPO, USUARIOID) VALUES (?,?,?,?);");
+                telefoneStatement.setInt(1, telefone.getDdd());
+                telefoneStatement.setString(2, telefone.getNumero());
+                telefoneStatement.setString(3, String.valueOf(telefone.getTipo()));
+                telefoneStatement.setInt(4, usuarioid);
+                result = telefoneStatement.executeUpdate();
 
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao informar dados do telefone.");
+                if (result == 0) {
+                    throw new SQLException("Houve um erro ao informar dados do telefone.");
+                }
+            }
+
+        } finally {
+            connection.commit();
+            JDBCFactory.close(telefoneStatement);
+            JDBCFactory.close(usuarioStatement, connection);
         }
-        connection.commit();
-        JDBCFactory.close(telefoneStatement);
-        JDBCFactory.close(usuarioStatement, connection);
 
         return true;
     }
@@ -57,66 +65,83 @@ public class UsuarioDAO {
 
         Connection connection = JDBCFactory.getConnection();
         Usuario usuario;
+        ResultSet result = null;
+        try {
+            usuarioStatement = connection.prepareStatement(
+                    "SELECT * FROM Usuario ORDER BY nome;");
+            result = usuarioStatement.executeQuery();
 
-        usuarioStatement = connection.prepareStatement(
-                "SELECT Usuario.*, Telefone.* FROM Usuario INNER JOIN Telefone ON Usuario.id=Telefone.usuarioId;");
-        ResultSet result = usuarioStatement.executeQuery();
+            while (result.next()) {
+                usuario = new Usuario();
 
-        while (result.next()) {
-            usuario = new Usuario();
-            usuario.Telefone = new Telefone();
+                usuario.setId(result.getInt("ID"));
+                usuario.setNome(result.getString("NOME"));
+                usuario.setEmail(result.getString("EMAIL"));
+                usuario.setLogin(result.getString("LOGIN"));
 
-            usuario.setNome(result.getString("NOME"));
-            usuario.setEmail(result.getString("EMAIL"));
-            usuario.setSenha(result.getString("SENHA"));
-            usuario.setId(result.getInt("ID"));
-            usuario.getTelefone().setDdd(result.getInt("DDD"));
-            usuario.getTelefone().setNumero(result.getString("NUMERO"));
-            usuario.getTelefone().setTipo(result.getString("TIPO"));
+                UsuariosList.add(usuario);
+            }
 
-            UsuariosList.add(usuario);
+        } finally {
+
+            JDBCFactory.close(result, usuarioStatement, connection);
         }
 
-        JDBCFactory.close(result, usuarioStatement, connection);
-
         return UsuariosList;
+
     }
 
     public int UpdateUsuario(Usuario usuario) throws SQLException, ClassNotFoundException {
 
         int result = 0;
         Connection connection = JDBCFactory.getConnection();
+        try {
 
-        connection.setAutoCommit(false);
-        usuarioStatement = connection.prepareStatement("UPDATE USUARIO SET NOME =?, EMAIL=?, SENHA=? WHERE ID=?;");
+            connection.setAutoCommit(false);
+            usuarioStatement = connection.prepareStatement("UPDATE USUARIO SET NOME =?, EMAIL=?, LOGIN =?, SENHA=? WHERE ID=?;");
 
-        usuarioStatement.setString(1, usuario.getNome());
-        usuarioStatement.setString(2, usuario.getEmail());
-        usuarioStatement.setString(3, usuario.getSenha());
-        usuarioStatement.setInt(4, usuario.getId());
-        result = usuarioStatement.executeUpdate();
+            usuarioStatement.setString(1, usuario.getNome());
+            usuarioStatement.setString(2, usuario.getEmail());
+            usuarioStatement.setString(3, usuario.getLogin());
+            usuarioStatement.setString(4, usuario.getSenha());
+            usuarioStatement.setInt(5, usuario.getId());
+            result = usuarioStatement.executeUpdate();
 
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao editar usuário.");
+            if (result == 0) {
+                throw new SQLException("Houve um erro ao editar usuário.");
+            }
+
+            for (Telefone telefone : usuario.getTelefones()) {
+
+                if (telefone.getIdString() == "" || telefone.getIdString() == null) {
+                    telefoneStatement = connection.prepareStatement("INSERT INTO Public.TELEFONE ( DDD, NUMERO, TIPO, USUARIOID) VALUES (?,?,?,?);");
+                    telefoneStatement.setInt(1, telefone.getDdd());
+                    telefoneStatement.setString(2, telefone.getNumero());
+                    telefoneStatement.setString(3, String.valueOf(telefone.getTipo()));
+                    telefoneStatement.setInt(4, usuario.getId());
+
+                    result = telefoneStatement.executeUpdate();
+
+                } else {
+                    telefoneStatement = connection.prepareStatement("UPDATE TELEFONE SET DDD =?, NUMERO=?, TIPO=? WHERE USUARIOID=? and ID=?");
+                    telefoneStatement.setInt(1, telefone.getDdd());
+                    telefoneStatement.setString(2, telefone.getNumero());
+                    telefoneStatement.setString(3, String.valueOf(telefone.getTipo()));
+                    telefoneStatement.setInt(4, usuario.getId());
+                    telefoneStatement.setInt(5, telefone.getId());
+
+                    result = telefoneStatement.executeUpdate();
+                }
+            }
+
+            if (result == 0) {
+                throw new SQLException("Houve um erro ao incluir dados de telefone.");
+            }
+        } finally {
+            connection.commit();
+            JDBCFactory.close(telefoneStatement);
+            JDBCFactory.close(usuarioStatement, connection);
         }
-
-        telefoneStatement = connection.prepareStatement("UPDATE TELEFONE SET DDD =?, NUMERO=?, TIPO=? WHERE USUARIOID=?");
-
-        telefoneStatement.setInt(1, usuario.Telefone.getDdd());
-        telefoneStatement.setString(2, usuario.Telefone.getNumero());
-        telefoneStatement.setString(3, usuario.Telefone.getTipo());
-        telefoneStatement.setInt(4, usuario.getId());
-
-        result = telefoneStatement.executeUpdate();
-
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao incluir dados de telefone.");
-        }
-
-        connection.commit();
-        JDBCFactory.close(telefoneStatement);
-        JDBCFactory.close(usuarioStatement, connection);
-
         return result;
     }
 
@@ -124,52 +149,77 @@ public class UsuarioDAO {
 
         int result = 0;
         Connection connection = JDBCFactory.getConnection();
+        try {
+            connection.setAutoCommit(false);
 
-        connection.setAutoCommit(false);
+            telefoneStatement = connection.prepareStatement("DELETE FROM TELEFONE WHERE USUARIOID = ?");
 
-        telefoneStatement = connection.prepareStatement("DELETE FROM TELEFONE WHERE USUARIOID = ?");
+            telefoneStatement.setInt(1, id);
 
-        telefoneStatement.setInt(1, id);
+            result = telefoneStatement.executeUpdate();
 
-        result = telefoneStatement.executeUpdate();
+            if (result == 0) {
+                throw new SQLException("Houve um erro ao editar usuário.");
+            }
 
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao editar usuário.");
+            usuarioStatement = connection.prepareStatement("DELETE FROM USUARIO WHERE ID = ?");
+
+            usuarioStatement.setInt(1, id);
+
+            result = usuarioStatement.executeUpdate();
+
+            if (result == 0) {
+                throw new SQLException("Houve um erro ao editar usuário.");
+            }
+
+            result = usuarioStatement.executeUpdate();
+        } finally {
+            connection.commit();
+            JDBCFactory.close(telefoneStatement);
+            JDBCFactory.close(usuarioStatement, connection);
         }
-
-        usuarioStatement = connection.prepareStatement("DELETE FROM USUARIO WHERE ID = ?");
-
-        usuarioStatement.setInt(1, id);
-
-        result = usuarioStatement.executeUpdate();
-
-        if (result == 0) {
-            throw new SQLException("Houve um erro ao editar usuário.");
-        }
-
-        result = usuarioStatement.executeUpdate();
-
-        connection.commit();
-        JDBCFactory.close(telefoneStatement);
-        JDBCFactory.close(usuarioStatement, connection);
-
         return result;
     }
 
     public boolean VerifyEmailAndPassword(Usuario usuario) throws SQLException, ClassNotFoundException {
         Connection connection = JDBCFactory.getConnection();
+        ResultSet result = null;
+        try {
+            usuarioStatement = connection.prepareStatement("SELECT * FROM USUARIO WHERE LOGIN=? AND SENHA=?");
+            usuarioStatement.setString(1, usuario.getLogin());
+            usuarioStatement.setString(2, usuario.getSenha());
+            result = usuarioStatement.executeQuery();
 
-        usuarioStatement = connection.prepareStatement("SELECT * FROM USUARIO WHERE EMAIL=? AND SENHA=?");
-        usuarioStatement.setString(1, usuario.getEmail());
-        usuarioStatement.setString(2, usuario.getSenha());
-        ResultSet result = usuarioStatement.executeQuery();
-
-        if (!result.next()) {
-            throw new SQLException("Dados de login incorretos");
+            if (!result.next()) {
+                throw new SQLException("Dados de login incorretos");
+            }
+        } finally {
+            JDBCFactory.close(result, usuarioStatement, connection);
         }
+        return true;
+    }
 
-        JDBCFactory.close(result, usuarioStatement, connection);
+    public boolean VerifyLogin(String login, String id) throws SQLException, ClassNotFoundException {
+        Connection connection = JDBCFactory.getConnection();
+        ResultSet result = null;
+        try {
+            if (id == null || id.equals("")) {
+                usuarioStatement = connection.prepareStatement("SELECT Login FROM USUARIO WHERE LOGIN=?");
+                usuarioStatement.setString(1, login);
+                result = usuarioStatement.executeQuery();
+            } else {
+                usuarioStatement = connection.prepareStatement("SELECT Login FROM USUARIO WHERE LOGIN=? AND ID <> ? ");
+                usuarioStatement.setString(1, login);
+                usuarioStatement.setInt(2, Integer.parseInt(id));
+                result = usuarioStatement.executeQuery();
+            }
 
+            if (!result.next()) {
+                return false;
+            }
+        } finally {
+            JDBCFactory.close(result, usuarioStatement, connection);
+        }
         return true;
     }
 
@@ -177,30 +227,45 @@ public class UsuarioDAO {
 
         Connection connection = JDBCFactory.getConnection();
         Usuario usuario;
+        ResultSet result = null;
+        try {
+            usuarioStatement = connection.prepareStatement("SELECT * FROM Usuario WHERE id = ?");
 
-        usuarioStatement = connection.prepareStatement("SELECT Usuario.*, Telefone.* FROM Usuario INNER JOIN Telefone ON Usuario.id=Telefone.usuarioId WHERE usuario.id = ?;");
+            usuarioStatement.setInt(1, id);
 
-        usuarioStatement.setInt(1, id);
+            result = usuarioStatement.executeQuery();
 
-        ResultSet result = usuarioStatement.executeQuery();
+            if (!result.next()) {
+                throw new SQLException("Houve um erro ao editar usuário.");
+            } else {
+                usuario = new Usuario();
+                usuario.Telefones = new ArrayList<Telefone>();
+                usuario.setNome(result.getString("NOME"));
+                usuario.setEmail(result.getString("EMAIL"));
+                usuario.setSenha(result.getString("SENHA"));
+                usuario.setLogin(result.getString("LOGIN"));
+                usuario.setId(result.getInt("ID"));
+            }
 
-        if (!result.next()) {
-            throw new SQLException("Houve um erro ao editar usuário.");
-        } else {
-            usuario = new Usuario();
-            usuario.Telefone = new Telefone();
+            telefoneStatement = connection.prepareStatement("SELECT * FROM telefone WHERE usuarioid = ?");
+            telefoneStatement.setInt(1, id);
 
-            usuario.setNome(result.getString("NOME"));
-            usuario.setEmail(result.getString("EMAIL"));
-            usuario.setSenha(result.getString("SENHA"));
-            usuario.setId(result.getInt("ID"));
-            usuario.getTelefone().setDdd(result.getInt("DDD"));
-            usuario.getTelefone().setNumero(result.getString("NUMERO"));
-            usuario.getTelefone().setTipo(result.getString("TIPO"));
+            result = telefoneStatement.executeQuery();
+
+            while (result.next()) {
+                Telefone telefone = new Telefone();
+                telefone.setNumero(result.getString("NUMERO"));
+                telefone.setDdd(result.getInt("DDD"));
+                telefone.setTipo(result.getString("TIPO").charAt(0));
+                telefone.setId(result.getInt("ID"));
+                telefone.setUsuarioId(result.getInt("USUARIOID"));
+                usuario.Telefones.add(telefone);
+            }
+        } finally {
+
+            JDBCFactory.close(telefoneStatement);
+            JDBCFactory.close(result, usuarioStatement, connection);
         }
-
-        JDBCFactory.close(result, usuarioStatement, connection);
-
         return usuario;
     }
 }
